@@ -7,13 +7,12 @@ on:
   # When the v2 release is complete, this workflow will open a PR to update the v1 release branch.
   push:
     branches:
-      - v2
+      - releases/v2
 
 jobs:
   update:
     timeout-minutes: 45
     runs-on: ubuntu-latest
-    if: github.repository == 'github/codeql-action'
     steps:
     - name: Dump environment
       run: env
