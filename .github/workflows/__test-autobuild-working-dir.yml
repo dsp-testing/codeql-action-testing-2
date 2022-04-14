@@ -3,7 +3,7 @@
 #     pip install ruamel.yaml && python3 sync.py
 # to regenerate this file.
 
-name: PR Check - Local CodeQL bundle
+name: PR Check - Autobuild working directory
 env:
   GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
   GO111MODULE: auto
@@ -11,8 +11,8 @@ on:
   push:
     branches:
     - main
-    - releases/v1
-    - releases/v2
+    - v1
+    - v2
   pull_request:
     types:
     - opened
@@ -21,13 +21,13 @@ on:
     - ready_for_review
   workflow_dispatch: {}
 jobs:
-  test-local-codeql:
+  test-autobuild-working-dir:
     strategy:
       matrix:
         include:
         - os: ubuntu-latest
-          version: nightly-latest
-    name: Local CodeQL bundle
+          version: latest
+    name: Autobuild working directory
     timeout-minutes: 45
     runs-on: ${{ matrix.os }}
     steps:
@@ -38,20 +38,30 @@ jobs:
       uses: ./.github/prepare-test
       with:
         version: ${{ matrix.version }}
-    - name: Fetch a CodeQL bundle
+    - name: Test setup
       shell: bash
-      env:
-        CODEQL_URL: ${{ steps.prepare-test.outputs.tools-url }}
       run: |
-        wget "$CODEQL_URL"
+        # Make sure that Gradle build succeeds in autobuild-dir ...
+        cp -a ../action/tests/java-repo autobuild-dir
+        # ... and fails if attempted in the current directory
+        echo > build.gradle
     - uses: ./../action/init
       with:
-        tools: ./codeql-bundle.tar.gz
-    - name: Build code
-      shell: bash
-      run: ./build.sh
+        languages: java
+        tools: ${{ steps.prepare-test.outputs.tools-url }}
+    - uses: ./../action/autobuild
+      with:
+        working-directory: autobuild-dir
     - uses: ./../action/analyze
       env:
         TEST_MODE: true
+    - name: Check database
+      shell: bash
+      run: |
+        cd "$RUNNER_TEMP/codeql_databases"
+        if [[ ! -d java ]]; then
+          echo "Did not find a Java database"
+          exit 1
+        fi
     env:
       INTERNAL_CODEQL_ACTION_DEBUG_LOC: true
