@@ -1,5 +1,10 @@
 # CodeQL Action Changelog
 
+## 1.1.9 - 25 Apr 2022
+
+- Add `working-directory` input to the `autobuild` action. [#1024](https://github.com/github/codeql-action/pull/1024)
+- The `analyze` and `upload-sarif` actions will now wait up to 2 minutes for processing to complete after they have uploaded the results so they can report any processing errors that occurred. This behavior can be disabled by setting the `wait-for-processing` action input to `"false"`. [#1007](https://github.com/github/codeql-action/pull/1007)
+
 ## 1.1.8 - 08 Apr 2022
 
 - Update default CodeQL bundle version to 2.8.5. [#1014](https://github.com/github/codeql-action/pull/1014)
